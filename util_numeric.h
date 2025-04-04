@@ -38,7 +38,7 @@
 //Maybe later replace that array hack with proper static assert
 #define _swap(a, b)							\
   do{									\
-    uint8_t error_swapping_arguments_of_different_sizes[(sizeof(a) == sizeof(b))?(ptrdiff_t)sizeof(a):-1];	\
+    uint8_t error_swapping_arguments_of_different_sizes[(sizeof(a) == sizeof(b))?(sptr)sizeof(a):-1];	\
     void* addr1 = &(a);\
     void* addr2 = &(b);\
     memcpy(error_swapping_arguments_of_different_sizes,addr1,sizeof(a));\
