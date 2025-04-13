@@ -30,6 +30,7 @@ struct Alloc_Interface {
 #include <malloc.h>
 #endif
 UTILAPI void* aligned_malloc_wrapper_(void* p_data, size_t size, size_t align){
+  (void)p_data;
   //Need to use separate thing for unix or posix windows, and separate for non posix windows
 #if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)) && !defined(__CYGWIN__)
   return _aligned_malloc(size, align);
@@ -39,6 +40,7 @@ UTILAPI void* aligned_malloc_wrapper_(void* p_data, size_t size, size_t align){
 #endif
 }
 UTILAPI void aligned_mfree_wrapper_(void* p_data, void* pmem){
+  (void)p_data;
   //free(pmem);
 #if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)) && !defined(__CYGWIN__)
   _aligned_free(pmem);
@@ -130,7 +132,7 @@ UTILAPI void free_mem(Alloc_Interface allocr, void* pmem){
 
 // A get/set kind of thing for slice that also asserts for data pointer not being null
 //and the index is >=0 and < specified length 
-#define slice_inx(slice, inx) (*((assert(("Trying to access slice where it is absent", ((slice).data != nullptr))), assert(("Slice index out of range", ( (inx) < (slice).count && (inx)>= 0  )))), &((slice).data[inx])))
+#define slice_inx(slice, inx) (*((assert(((void)"Trying to access slice where it is absent", ((slice).data != nullptr))), assert(((void)"Slice index out of range", ( (inx) < (slice).count && (inx)>= 0  )))), &((slice).data[inx])))
 
 #define for_slice(slice, inx) for_range(size_t, inx, 0, (slice).count)
 
