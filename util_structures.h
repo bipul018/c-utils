@@ -74,13 +74,14 @@ UTILAPI void free_mem(Alloc_Interface allocr, void* pmem){
 //Gives a
 //slice iff ptr is not null
 
-
-#define DEF_SLICE(base_type)						\
+#define DEF_SLICE_STR(base_type)						\
   typedef struct base_type##_Slice base_type##_Slice;			\
   struct base_type##_Slice {						\
     base_type* data;							\
     size_t count;							\
-  };									\
+  };
+
+#define DEF_SLICE_FXN(base_type)						\
   UTILAPI base_type##_Slice init_##base_type##_slice(base_type* ptr, size_t count){ \
     if(ptr == nullptr) return (base_type##_Slice){0};			\
     return(base_type##_Slice){.data = ptr, .count = count};		\
@@ -97,7 +98,11 @@ UTILAPI void free_mem(Alloc_Interface allocr, void* pmem){
     memcpy(new_slice.data, src.data, base_type##_slice_bytes(src));	\
     return new_slice;							\
   }
-    
+
+
+#define DEF_SLICE(base_type)						\
+  DEF_SLICE_STR(base_type);						\
+  DEF_SLICE_FXN(base_type);
 
 #define SLICE_FROM_ARRAY(base_type, array)		\
   init_##base_type##_slice(array, _countof(array))
