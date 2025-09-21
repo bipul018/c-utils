@@ -299,8 +299,10 @@ UTILAPI bool adjust_darray(Alloc_Interface allocr, void** baseptr,
   }									\
   UTILAPI bool downsize_##basetype##_darray(basetype##_Darray* arr, size_t pos, size_t amt){ \
     if(pos > arr->count) return false;					\
-    if(amt > pos) return false;					\
-    size_t new_dst = pos - amt;						\
-    memmove((void*)(arr->data + new_dst), (void*)(arr->data + pos), (arr->count-pos) * sizeof(basetype)); \
+    size_t src_off = pos + amt;						\
+    if(src_off > arr->count) return false;				\
+    if(src_off < arr->count)						\
+      memmove((void*)(arr->data + pos), (void*)(arr->data + src_off),	\
+	      (arr->count-src_off) * sizeof(basetype));			\
     return pop_##basetype##_darray(arr, amt);				\
   }	       
