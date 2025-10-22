@@ -10,10 +10,6 @@
 #define YEARS   (DAYS * 365ULL)
 typedef struct timespec timespec;
 
-//Now only windows is supported here, uses windows.h directly
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 
 UTILAPI timespec get_timer_delta(struct timespec t1, struct timespec t0){
 
@@ -27,7 +23,7 @@ UTILAPI timespec get_timer_delta(struct timespec t1, struct timespec t0){
 }
 
 UTILAPI timespec add_two_times(timespec t1, timespec t2){
-    timespec res={0};
+  timespec res={0};
   uint64_t nsec = t1.tv_nsec;
   nsec += t2.tv_nsec;
   res.tv_sec = 0;
@@ -39,6 +35,10 @@ UTILAPI timespec add_two_times(timespec t1, timespec t2){
   res.tv_sec += t1.tv_sec + t2.tv_sec;
   return res;
 }
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 UTILAPI timespec filetime_to_timespec(FILETIME ft){
   timespec ts;
@@ -63,13 +63,6 @@ UTILAPI timespec start_process_timer()
   return add_two_times(filetime_to_timespec(kernel), filetime_to_timespec(user));
 }
 
-UTILAPI timespec end_process_timer(timespec* time)
-{
-    struct timespec hold = *time;
-    *time = start_process_timer();
-    return get_timer_delta(*time, hold);
-}
-
 UTILAPI timespec start_thread_timer()
 {
   FILETIME create, exited, kernel, user;
@@ -78,13 +71,6 @@ UTILAPI timespec start_thread_timer()
   }
 
   return add_two_times(filetime_to_timespec(kernel), filetime_to_timespec(user));
-}
-
-UTILAPI timespec end_thread_timer(timespec* time)
-{
-  struct timespec hold = *time;
-  *time = start_thread_timer();
-  return get_timer_delta(*time,hold);
 }
 
 UTILAPI LARGE_INTEGER timer_perf_freq = {0};
@@ -102,12 +88,60 @@ UTILAPI timespec start_monotonic_timer()
   return ts;
 }
 
+//#endif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#elif defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+
+UTILAPI timespec start_process_timer()
+{
+  struct timespec ts;
+  if(clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) != 0){
+    return (timespec){0};
+  }
+
+  return ts;
+}
+
+UTILAPI timespec start_thread_timer()
+{
+  struct timespec ts;
+  if(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0){
+    return (timespec){0};
+  }
+
+  return ts;
+}
+
+UTILAPI timespec start_monotonic_timer()
+{
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ts;
+}
+
+//#endif defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#endif
+
 UTILAPI timespec end_monotonic_timer(timespec* time)
 {
   struct timespec hold = *time;
   *time = start_monotonic_timer();
   return get_timer_delta(*time,hold);
 }
+
+UTILAPI timespec end_thread_timer(timespec* time)
+{
+  struct timespec hold = *time;
+  *time = start_thread_timer();
+  return get_timer_delta(*time,hold);
+}
+
+UTILAPI timespec end_process_timer(timespec* time)
+{
+    struct timespec hold = *time;
+    *time = start_process_timer();
+    return get_timer_delta(*time, hold);
+}
+
 
 UTILAPI double timer_sec(timespec del){
     return (double)del.tv_sec + (double)del.tv_nsec UNANO;
@@ -151,9 +185,10 @@ UTILAPI double get_moving_avg(double *arr, int* inx, int size, double newval){
 
 UTILAPI void get_moving_avg_faster(double* arr, int* inx, int size, double newval, double* out_val){
     assert(arr && inx && out_val);
-    *inx = _clamp(*inx,0,size-1);
-    (*out_val) = (newval - arr[*inx]) / size;
+    *inx = _clamp(*inx+1,0,size-1);
+    // Prone to risk of calculation blowing up or shrinking down is there
+    (*out_val) = (size * (*out_val) + newval - arr[*inx]) / size;
     arr[*inx] = newval;
 }
 
-#endif // defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+
