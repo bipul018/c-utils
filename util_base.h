@@ -82,6 +82,40 @@ typedef void(voidfn)(void);
   GET_MACRO(_0,__VA_ARGS__,FE_9,FE_8,FE_7,FE_6,FE_5,FE_4,FE_3,FE_2,FE_1,FE_0)(0, action,__VA_ARGS__)
 
 
+// A for each macro, but passes 'N' in reverse (last element gets 0)
+// But the upside from the `FOR_EACH_VA` is that the counter is a preprocessor constant
+//     and addition of more entries is easier (just copy paste the definition)
+#define FOR_EACH_VA2(action, ...)		\
+  CONCAT(FE2_, VA_NARGS(__VA_ARGS__))(action, __VA_ARGS__)
+
+#define FE2_0(...) 
+#define FE2_1(what, x, ...) what(VA_NARGS(__VA_ARGS__), x) CONCAT(FE2_, VA_NARGS(__VA_ARGS__))(what, __VA_ARGS__)
+#define FE2_2(what, x, ...) what(VA_NARGS(__VA_ARGS__), x) CONCAT(FE2_, VA_NARGS(__VA_ARGS__))(what, __VA_ARGS__)
+#define FE2_3(what, x, ...) what(VA_NARGS(__VA_ARGS__), x) CONCAT(FE2_, VA_NARGS(__VA_ARGS__))(what, __VA_ARGS__)
+#define FE2_4(what, x, ...) what(VA_NARGS(__VA_ARGS__), x) CONCAT(FE2_, VA_NARGS(__VA_ARGS__))(what, __VA_ARGS__)
+#define FE2_5(what, x, ...) what(VA_NARGS(__VA_ARGS__), x) CONCAT(FE2_, VA_NARGS(__VA_ARGS__))(what, __VA_ARGS__)
+#define FE2_6(what, x, ...) what(VA_NARGS(__VA_ARGS__), x) CONCAT(FE2_, VA_NARGS(__VA_ARGS__))(what, __VA_ARGS__)
+// ... repeat as needed, only the definition identifier has to be changed
+
+// A macro built by stackoverflow codes + chatgpt adjustments 
+#define _IS_ZERO_0 ~, 1
+#define _CHECK_IS_ZERO(x)     _CHECK_IS_ZERO_HELPER(_IS_ZERO_##x)
+#define _CHECK_IS_ZERO_HELPER(...)  _ARG_SECOND(__VA_ARGS__, 0)
+#define _ARG_SECOND(_0, _1, ...)   _1
+#define IF_0_1(TRUE_MACRO, FALSE_MACRO)  TRUE_MACRO
+#define IF_0_0(TRUE_MACRO, FALSE_MACRO) FALSE_MACRO
+#define IF_ZERO(x, TRUE_MACRO, FALSE_MACRO) \
+    CONCAT(IF_0_, _CHECK_IS_ZERO(x))(TRUE_MACRO, FALSE_MACRO)
+
+// Usage:
+//#define MY_MACRO(a, ...)				\
+//    IF_ZERO(a, expand_0, expand_other)(__VA_ARGS__)
+// MY_MACRO(0, abc) => `expand_0(abc)`
+// MY_MACRO(1, abc) => `expand_other(abc)`
+// MY_MACRO(z, abc) => `expand_other(abc)`
+
+
+
 //Helper macro to pass array directly like arr, count of arr
 #define PASS_ARR_COUNT(array) (array),_countof(array)
 //Helper macro to pass array directly like count of arr, arr
